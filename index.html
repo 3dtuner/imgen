@@ -34,24 +34,20 @@
 </head>
 <body class="p-4 sm:p-6">
 
-    <!-- Main Container -->
     <div class="flex flex-col lg:flex-row gap-6 scroll-area">
         
-        <!-- Controls & Main Display (Left/Top) -->
         <div class="lg:w-3/4">
             <header class="mb-6">
                 <h1 class="text-3xl font-extrabold text-yellow-400">Gemini Image Forge</h1>
                 <p class="text-gray-400 mt-1">Generate highly detailed images using the Imagen 3.0 model.</p>
             </header>
             
-            <!-- Generation Form -->
             <div class="bg-gray-800 p-6 rounded-xl shadow-2xl mb-6 border border-gray-700">
                 <label for="prompt" class="block text-lg font-semibold mb-2 text-yellow-300">Image Prompt</label>
                 <textarea id="prompt" rows="3" placeholder="A majestic cybernetic dragon perched on a neon skyscraper, photorealistic, cinematic lighting, 8k resolution."
                           class="w-full p-3 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500"></textarea>
                 
                 <div class="mt-4 flex flex-col sm:flex-row gap-4">
-                    <!-- Aspect Ratio Selector -->
                     <div class="flex-grow">
                         <label for="aspectRatio" class="block text-sm font-medium mb-1 text-gray-400">Aspect Ratio</label>
                         <select id="aspectRatio" class="w-full p-3 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:ring-2 focus:ring-yellow-500">
@@ -62,7 +58,6 @@
                         </select>
                     </div>
 
-                    <!-- Generate Button -->
                     <div class="sm:self-end pt-4 sm:pt-0">
                         <button onclick="generateImage()" id="generateButton"
                                 class="w-full sm:w-auto px-8 py-3 bg-yellow-600 hover:bg-yellow-500 text-gray-900 font-extrabold rounded-lg transition duration-200 shadow-xl disabled:opacity-50">
@@ -72,12 +67,10 @@
                 </div>
             </div>
 
-            <!-- Main Image Display -->
             <div class="relative bg-gray-900 border border-gray-700 rounded-xl shadow-2xl aspect-square md:aspect-video overflow-hidden">
                 <img id="mainImage" src="https://placehold.co/1600x900/1e293b/94a3b8?text=Your+AI+Creation+Appears+Here" alt="Generated Image" 
                      class="w-full h-full object-cover rounded-xl" onerror="this.onerror=null; this.src='https://placehold.co/1600x900/1e293b/94a3b8?text=Error+Loading+Image'" />
                 
-                <!-- Loading Overlay -->
                 <div id="loading-overlay" class="absolute inset-0 flex items-center justify-center hidden">
                     <div class="text-center">
                         <svg class="animate-spin h-10 w-10 text-yellow-400 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -88,10 +81,8 @@
                     </div>
                 </div>
 
-                <!-- Error Display -->
                 <p id="error-display" class="absolute top-4 left-4 p-2 bg-red-800 text-red-200 rounded-lg shadow-lg hidden">An error occurred.</p>
 
-                <!-- Download Button (New Feature) -->
                 <button onclick="downloadImage()" id="downloadButton"
                         class="absolute bottom-4 right-4 px-4 py-2 bg-yellow-600 hover:bg-yellow-500 text-gray-900 font-bold rounded-lg transition duration-200 shadow-xl hidden" disabled>
                     Download
@@ -99,7 +90,6 @@
             </div>
         </div>
         
-        <!-- History Panel (Right/Bottom) -->
         <div class="lg:w-1/4">
             <h2 class="text-2xl font-bold mb-4 text-yellow-400 border-b border-gray-700 pb-2">Generation History</h2>
             <div id="history-container" class="grid grid-cols-2 gap-4 lg:grid-cols-1">
@@ -108,11 +98,13 @@
         </div>
     </div>
 
-    <!-- JavaScript Logic -->
     <script>
         // Global variables provided by the environment
-        const API_KEY = ""; // Canvas will automatically provide the key. (Do not change this line)
-        const IMAGEN_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${API_KEY}`;
+        const API_KEY = "AIzaSyC1qqRmTxEFMpnYVeuPNxLAp-R7bth8rzs"; // Canvas will automatically provide the key. (Do not change this line)
+        
+        // FIX: Change to the standard API endpoint without appending the API_KEY
+        // The API_KEY is automatically handled by the environment for this endpoint
+        const IMAGEN_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:generateImages';
         
         const promptInput = document.getElementById('prompt');
         const aspectRatioSelect = document.getElementById('aspectRatio');
@@ -212,18 +204,19 @@
 
             toggleLoading(true);
 
+            // FIX: The API uses a 'requests' array, not 'instances' for this endpoint
             const payload = {
-                instances: [{
+                requests: [{ // Changed 'instances' to 'requests'
                     prompt: userPrompt,
                     aspectRatio: selectedAspect,
-                    negativePrompt: NEGATIVE_PROMPT
-                }],
-                parameters: {
-                    sampleCount: 1, // Only generate 1 image
-                }
+                    negativePrompt: NEGATIVE_PROMPT,
+                    numberOfImages: 1 // Changed 'sampleCount' to 'numberOfImages'
+                }]
             };
 
             try {
+                // For this environment, we don't need the API_KEY in the URL,
+                // and the API requires a different payload structure.
                 const response = await fetch(IMAGEN_API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -231,13 +224,17 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    // Check if it's a 403 or other known error
+                    const errorText = await response.text();
+                    console.error("API Response Error Body:", errorText);
+                    throw new Error(`HTTP error! status: ${response.status} - ${errorText.substring(0, 100)}...`);
                 }
 
                 const result = await response.json();
 
-                if (result.predictions && result.predictions.length > 0 && result.predictions[0].bytesBase64Encoded) {
-                    const base64Data = result.predictions[0].bytesBase64Encoded;
+                // FIX: Adjusting to the correct response structure
+                if (result.generatedImages && result.generatedImages.length > 0 && result.generatedImages[0].image.imageBytes) {
+                    const base64Data = result.generatedImages[0].image.imageBytes;
                     const imageUrl = `data:image/png;base64,${base64Data}`;
 
                     mainImage.src = imageUrl; // Update main image
@@ -255,7 +252,7 @@
 
                     updateHistory();
                 } else {
-                    throw new Error("API did not return a valid image.");
+                    throw new Error("API did not return a valid image. Check console for API response details.");
                 }
             } catch (error) {
                 console.error("Imagen API Error:", error);
@@ -263,7 +260,9 @@
                 // Implement exponential backoff for throttling/transient errors
                 if (retryCount < 3) {
                     const delay = Math.pow(2, retryCount) * 1000;
+                    // displayError(`Retrying in ${delay / 1000}s...`); // Optional: show retry message
                     await new Promise(resolve => setTimeout(resolve, delay));
+                    // Recursive call to retry
                     await generateImage(retryCount + 1);
                 } else {
                     displayError(`Failed to generate image after retries. (${error.message || 'Check console for details'})`);
