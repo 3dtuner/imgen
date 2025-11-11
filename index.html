@@ -1,8 +1,9 @@
 <script>
     // Global variables provided by the environment
     const API_KEY = "AIzaSyC1qqRmTxEFMpnYVeuPNxLAp-R7bth8rzs"; // Canvas will automatically provide the key. (Do not change this line)
-    const IMAGEN_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${AIzaSyC1qqRmTxEFMpnYVeuPNxLAp-R7bth8rzs}`;
-// 👆 ERROR: This should be ${API_KEY}
+    
+    // 💡 FIX: This now correctly uses the JavaScript variable ${API_KEY}
+    const IMAGEN_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${API_KEY}`;
     
     const promptInput = document.getElementById('prompt');
     const aspectRatioSelect = document.getElementById('aspectRatio');
@@ -70,7 +71,7 @@
     // Function to handle image download
     function downloadImage() {
         const url = mainImage.src;
-        // FIX: Use the 'currentImagePrompt' for the filename instead of relying on the input field
+        // Use the 'currentImagePrompt' for the filename instead of relying on the input field
         const filenamePrompt = currentImagePrompt || promptInput.value.trim(); 
 
         if (url.startsWith('data:image/png;base64,')) {
@@ -169,7 +170,7 @@
                 await new Promise(resolve => setTimeout(resolve, delay));
                 await generateImage(retryCount + 1); // Retry the call
             } else {
-                // FIX: Display the actual error message from the last attempt
+                // Display the actual error message from the last attempt
                 displayError(`Failed to generate image after retries. (${lastError || 'Check console for details'})`); 
             }
         } finally {
@@ -180,10 +181,16 @@
         }
     }
 
-    // Set initial focus
+    // --- Initialization and Event Listeners ---
+
+    // Set initial focus and initialize current prompt
     window.onload = () => {
         promptInput.focus();
         currentImagePrompt = promptInput.value.trim(); // Initialize current prompt
+        
+        // 🚀 Add Event Listeners for the buttons
+        generateButton.addEventListener('click', generateImage);
+        downloadButton.addEventListener('click', downloadImage);
     };
 
 </script>
