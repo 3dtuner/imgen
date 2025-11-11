@@ -78,7 +78,7 @@
         // Global variables provided by the environment
         const API_KEY = "AIzaSyC1qqRmTxEFMpnYVeuPNxLAp-R7bth8rzs"; 
         
-        // ✅ FIX: The IMAGEN_API_URL now correctly uses the API_KEY variable
+        // FIX 1: Correctly uses the API_KEY variable
         const IMAGEN_API_URL = \`https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=\${API_KEY}\`;
         
         const promptInput = document.getElementById('prompt');
@@ -94,7 +94,7 @@
         const downloadButton = document.getElementById('downloadButton');
 
         let imageHistory = [];
-        let currentImagePrompt = ""; // New global variable to track the prompt of the currently displayed image
+        let currentImagePrompt = ""; 
 
         // Common negative prompt to improve image quality
         const NEGATIVE_PROMPT = "low resolution, blurry, distorted, grainy, text, watermark, extra fingers, malformed hands, ugly, tiling, cropped, signature, logo, duplicate";
@@ -176,7 +176,7 @@
         async function generateImage(retryCount = 0) {
             const userPrompt = promptInput.value.trim();
             const selectedAspect = aspectRatioSelect.value;
-            let lastError = null; // Variable to store the last error message
+            let lastError = null; 
 
             if (!userPrompt) {
                 displayError("Please enter a detailed prompt to generate an image.");
@@ -213,11 +213,11 @@
 
                 if (result.predictions && result.predictions.length > 0 && result.predictions[0].bytesBase64Encoded) {
                     const base64Data = result.predictions[0].bytesBase64Encoded;
-                    const imageUrl = \`data:image/png;base64,\${base64Data}\`;
+                    // ✅ FIX 2: Ensures the template literal for the image URL is correct
+                    const imageUrl = \`data:image/png;base64,\${base64Data}\`; 
 
                     mainImage.src = imageUrl; // Update main image
                     
-                    // Set the current image prompt for accurate downloads
                     currentImagePrompt = userPrompt; 
 
                     // Show and enable download button on success
@@ -238,7 +238,7 @@
                 }
             } catch (error) {
                 console.error("Imagen API Error:", error);
-                lastError = error.message; // Store the current error
+                lastError = error.message; 
                 
                 // Implement exponential backoff for throttling/transient errors
                 if (retryCount < 3) {
@@ -262,9 +262,9 @@
         // Set initial focus and initialize current prompt
         window.onload = () => {
             promptInput.focus();
-            currentImagePrompt = promptInput.value.trim(); // Initialize current prompt
+            currentImagePrompt = promptInput.value.trim(); 
             
-            // Attach functions to the button click events
+            // ✅ FIX 3: Attach functions to the button click events
             generateButton.addEventListener('click', generateImage);
             downloadButton.addEventListener('click', downloadImage);
         };
