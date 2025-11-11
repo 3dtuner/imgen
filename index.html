@@ -1,8 +1,8 @@
 <script>
     // Global variables provided by the environment
-    const API_KEY = "AIzaSyC1qqRmTxEFMpnYVeuPNxLAp-R7bth8rzs"; // Canvas will automatically provide the key. (Do not change this line)
+    const API_KEY = "AIzaSyC1qqRmTxEFMpnYVeuPNxLAp-R7bth8rzs"; 
     
-    // 💡 FIX: This now correctly uses the JavaScript variable ${API_KEY}
+    // ✅ FIX: The IMAGEN_API_URL now correctly uses the API_KEY variable
     const IMAGEN_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${API_KEY}`;
     
     const promptInput = document.getElementById('prompt');
@@ -188,7 +188,7 @@
         promptInput.focus();
         currentImagePrompt = promptInput.value.trim(); // Initialize current prompt
         
-        // 🚀 Add Event Listeners for the buttons
+        // 🚀 CRITICAL FIX: Attach functions to the button click events
         generateButton.addEventListener('click', generateImage);
         downloadButton.addEventListener('click', downloadImage);
     };
