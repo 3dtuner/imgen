@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Image Generator</title>
+    <title>AI Image Generator Recoded</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .history-item:hover {
@@ -21,7 +21,7 @@
 
     <main class="max-w-6xl mx-auto">
         <header class="text-center mb-10">
-            <h1 class="text-4xl font-extrabold text-blue-400">Imagen 3.0 Generator</h1>
+            <h1 class="text-4xl font-extrabold text-blue-400">Imagen 3.0 Generator (Recoded)</h1>
             <p class="text-gray-400">Describe your vision and watch the AI bring it to life.</p>
         </header>
 
@@ -75,94 +75,89 @@
     </main>
 
     <script>
-        // Global variables provided by the environment
+        // 1. ENVIRONMENT & CONSTANTS
         const API_KEY = "AIzaSyC1qqRmTxEFMpnYVeuPNxLAp-R7bth8rzs"; 
+        // Using concatenation to avoid template literal syntax issues
+        const IMAGEN_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=' + API_KEY;
+        const NEGATIVE_PROMPT = "low resolution, blurry, distorted, grainy, text, watermark, extra fingers, malformed hands, ugly, tiling, cropped, signature, logo, duplicate";
         
-        // FIX 1: Correctly uses the API_KEY variable
-        const IMAGEN_API_URL = \`https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=\${API_KEY}\`;
-        
-        const promptInput = document.getElementById('prompt');
-        const aspectRatioSelect = document.getElementById('aspectRatio');
-        const generateButton = document.getElementById('generateButton');
-        const mainImage = document.getElementById('mainImage');
-        const loadingOverlay = document.getElementById('loading-overlay');
-        const errorDisplay = document.getElementById('error-display');
-        const historyContainer = document.getElementById('history-container');
-        const historyPlaceholder = document.getElementById('history-placeholder');
-        
-        // Download button variable
-        const downloadButton = document.getElementById('downloadButton');
+        // 2. DOM ELEMENT REFERENCES
+        const DOM = {
+            promptInput: document.getElementById('prompt'),
+            aspectRatioSelect: document.getElementById('aspectRatio'),
+            generateButton: document.getElementById('generateButton'),
+            mainImage: document.getElementById('mainImage'),
+            loadingOverlay: document.getElementById('loading-overlay'),
+            errorDisplay: document.getElementById('error-display'),
+            historyContainer: document.getElementById('history-container'),
+            historyPlaceholder: document.getElementById('history-placeholder'),
+            downloadButton: document.getElementById('downloadButton')
+        };
 
+        // 3. GLOBAL STATE
         let imageHistory = [];
         let currentImagePrompt = ""; 
-
-        // Common negative prompt to improve image quality
-        const NEGATIVE_PROMPT = "low resolution, blurry, distorted, grainy, text, watermark, extra fingers, malformed hands, ugly, tiling, cropped, signature, logo, duplicate";
-
-        // --- Utility Functions ---
+        
+        // --- UTILITY FUNCTIONS ---
 
         function toggleLoading(isLoading) {
-            loadingOverlay.classList.toggle('hidden', !isLoading);
-            generateButton.disabled = isLoading;
-            promptInput.disabled = isLoading;
-            aspectRatioSelect.disabled = isLoading;
-            // Disable download button while loading
-            downloadButton.disabled = isLoading; 
+            DOM.loadingOverlay.classList.toggle('hidden', !isLoading);
+            DOM.generateButton.disabled = isLoading;
+            DOM.promptInput.disabled = isLoading;
+            DOM.aspectRatioSelect.disabled = isLoading;
+            DOM.downloadButton.disabled = isLoading; 
 
             if (isLoading) {
-                errorDisplay.classList.add('hidden');
-                generateButton.textContent = "Forging Reality...";
+                DOM.errorDisplay.classList.add('hidden');
+                DOM.generateButton.textContent = "Forging Reality...";
             } else {
-                generateButton.textContent = "Generate Image";
+                DOM.generateButton.textContent = "Generate Image";
             }
         }
 
         function displayError(message) {
-            errorDisplay.textContent = \`Error: \${message}\`;
-            errorDisplay.classList.remove('hidden');
+            DOM.errorDisplay.textContent = 'Error: ' + message;
+            DOM.errorDisplay.classList.remove('hidden');
         }
 
         function updateHistory() {
-            if (historyPlaceholder) historyPlaceholder.classList.add('hidden');
+            if (DOM.historyPlaceholder) DOM.historyPlaceholder.classList.add('hidden');
             
-            // Clear current history display
-            historyContainer.innerHTML = ''; 
+            DOM.historyContainer.innerHTML = ''; 
 
-            imageHistory.slice().reverse().forEach((item, index) => {
+            imageHistory.slice().reverse().forEach(item => {
                 const thumbnail = document.createElement('img');
                 thumbnail.src = item.url;
                 thumbnail.alt = item.prompt.substring(0, 30) + "...";
                 thumbnail.className = 'w-full h-auto object-cover rounded-lg shadow-md border-2 border-gray-700 history-item';
+                
+                // Click handler to load image back into main view
                 thumbnail.onclick = () => {
-                    mainImage.src = item.url; // Set the main image to the clicked history item
-                    promptInput.value = item.prompt; // Load the prompt back into the input
-                    currentImagePrompt = item.prompt; // Update the current prompt tracker
-                    downloadButton.classList.remove('hidden'); // Ensure download is visible
-                    downloadButton.disabled = false;
+                    DOM.mainImage.src = item.url; 
+                    DOM.promptInput.value = item.prompt; 
+                    currentImagePrompt = item.prompt; 
+                    DOM.downloadButton.classList.remove('hidden'); 
+                    DOM.downloadButton.disabled = false;
                 };
-                historyContainer.appendChild(thumbnail);
+                DOM.historyContainer.appendChild(thumbnail);
             });
         }
-        
-        // Function to handle image download
+
         function downloadImage() {
-            const url = mainImage.src;
-            // Use the 'currentImagePrompt' for the filename instead of relying on the input field
-            const filenamePrompt = currentImagePrompt || promptInput.value.trim(); 
+            const url = DOM.mainImage.src;
+            const filenamePrompt = currentImagePrompt || DOM.promptInput.value.trim(); 
 
             if (url.startsWith('data:image/png;base64,')) {
-                // 1. Create a temporary anchor element
                 const a = document.createElement('a');
                 a.href = url;
                 
-                // 2. Generate a filename from the prompt and timestamp
                 let filename = filenamePrompt.substring(0, 30).replace(/[^a-z0-9]/gi, '_').toLowerCase();
                 if (filename.length === 0) {
                     filename = 'ai_image';
                 }
-                a.download = \`\${filename}_\${Date.now()}.png\`;
+                // Using concatenation
+                a.download = filename + '_' + Date.now() + '.png';
 
-                // 3. Programmatically click the link to trigger the download
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
@@ -171,11 +166,11 @@
             }
         }
 
-        // --- Imagen API Call Logic ---
+        // --- CORE LOGIC: IMAGE GENERATION ---
 
-        async function generateImage(retryCount = 0) {
-            const userPrompt = promptInput.value.trim();
-            const selectedAspect = aspectRatioSelect.value;
+        async function handleImageGeneration(retryCount = 0) {
+            const userPrompt = DOM.promptInput.value.trim();
+            const selectedAspect = DOM.aspectRatioSelect.value;
             let lastError = null; 
 
             if (!userPrompt) {
@@ -191,9 +186,7 @@
                     aspectRatio: selectedAspect,
                     negativePrompt: NEGATIVE_PROMPT
                 }],
-                parameters: {
-                    sampleCount: 1, // Only generate 1 image
-                }
+                parameters: { sampleCount: 1 }
             };
 
             try {
@@ -205,7 +198,7 @@
 
                 if (!response.ok) {
                     const errorBody = await response.json().catch(() => ({}));
-                    const errorMessage = errorBody.error?.message || \`HTTP error! status: \${response.status}\`;
+                    const errorMessage = errorBody.error?.message || 'HTTP error! status: ' + response.status;
                     throw new Error(errorMessage);
                 }
 
@@ -213,26 +206,17 @@
 
                 if (result.predictions && result.predictions.length > 0 && result.predictions[0].bytesBase64Encoded) {
                     const base64Data = result.predictions[0].bytesBase64Encoded;
-                    // ✅ FIX 2: Ensures the template literal for the image URL is correct
-                    const imageUrl = \`data:image/png;base64,\${base64Data}\`; 
+                    // FIX: Reliable string concatenation for the critical line
+                    const imageUrl = 'data:image/png;base64,' + base64Data; 
 
-                    mainImage.src = imageUrl; // Update main image
-                    
+                    DOM.mainImage.src = imageUrl;
                     currentImagePrompt = userPrompt; 
+                    DOM.downloadButton.classList.remove('hidden'); 
+                    DOM.downloadButton.disabled = false;
 
-                    // Show and enable download button on success
-                    downloadButton.classList.remove('hidden'); 
-                    downloadButton.disabled = false;
-
-                    // Add to history
-                    imageHistory.push({
-                        url: imageUrl,
-                        prompt: userPrompt,
-                        aspectRatio: selectedAspect
-                    });
-
+                    imageHistory.push({ url: imageUrl, prompt: userPrompt, aspectRatio: selectedAspect });
                     updateHistory();
-                    return; // Exit successfully
+                    return; 
                 } else {
                     throw new Error("API did not return a valid image.");
                 }
@@ -240,34 +224,31 @@
                 console.error("Imagen API Error:", error);
                 lastError = error.message; 
                 
-                // Implement exponential backoff for throttling/transient errors
                 if (retryCount < 3) {
                     const delay = Math.pow(2, retryCount) * 1000;
                     await new Promise(resolve => setTimeout(resolve, delay));
-                    await generateImage(retryCount + 1); // Retry the call
+                    await handleImageGeneration(retryCount + 1); 
                 } else {
-                    // Display the actual error message from the last attempt
-                    displayError(\`Failed to generate image after retries. (\${lastError || 'Check console for details'})\`); 
+                    displayError('Failed to generate image after retries. (' + (lastError || 'Check console for details') + ')'); 
                 }
             } finally {
-                // Only stop loading if the final attempt (retryCount === 3 or initial success) is complete
                 if (retryCount >= 3 || lastError === null) {
                     toggleLoading(false);
                 }
             }
         }
 
-        // --- Initialization and Event Listeners ---
+        // --- INITIALIZATION ---
 
-        // Set initial focus and initialize current prompt
-        window.onload = () => {
-            promptInput.focus();
-            currentImagePrompt = promptInput.value.trim(); 
-            
-            // ✅ FIX 3: Attach functions to the button click events
-            generateButton.addEventListener('click', generateImage);
-            downloadButton.addEventListener('click', downloadImage);
-        };
+        function setupEventListeners() {
+            DOM.generateButton.addEventListener('click', handleImageGeneration);
+            DOM.downloadButton.addEventListener('click', downloadImage);
+            DOM.promptInput.focus();
+            currentImagePrompt = DOM.promptInput.value.trim(); 
+        }
+
+        // Wait until the HTML elements are fully loaded before running the script
+        document.addEventListener('DOMContentLoaded', setupEventListeners);
     </script>
 </body>
 </html>
